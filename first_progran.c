@@ -56,16 +56,13 @@ s
     -1 means no collision
  **/
 int fetch_bumpers_loop(int milliseconds){
-    bool loop = true;
 
     //i counts the milliseconds slept for approximately.
     for (int i = 0; i< time; i+= 100;){
         if (digital(left_bmpr)){
-            loop = false;
             return left_bmpr;
         }
         if (digital(right_bmpr)){
-            loop = false;
             return right_bmpr;
         }
         msleep(100);
@@ -83,13 +80,13 @@ int fetch_bumpers_loop(int milliseconds){
  **/
  int move(char* dir, int dur){
      int val;
-     enable_servos();
+     enable_servos(); // turn on motors
      if("forward")
-         mav(wheels, 800);
+         mav(wheels, 800); // move at velocity 800 out of -1000 to 1000
      else //"back"
          mav(wheels, -800);
-     val = fetch_bumpers_loop(dur*100); //dur * 100 is seconds to milliseconds
-     ao();
+     val = fetch_bumpers_loop(dur*100); // loop and check bumper. dur * 100 is seconds to milliseconds
+     ao(); // all motors off
      return val; // returns bumper port or -1 if nothing hit
  }
 
