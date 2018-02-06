@@ -8,9 +8,9 @@ int steering = 1;
 int full_turn = 1000;
 int half_turn = 600;
 
-int main() {
-bool loop = true;
-while(loop){
+int main(char* argv, int argc) {
+    bool loop = true;
+    while(loop){
     enable_servos();
     mav(wheels, 800);
     switch (digital(0) || digital(1)){
@@ -25,6 +25,7 @@ while(loop){
 // move_turn_90("left");
 // move_turn_90("right");
 
+ return 0;
 }
 
 void fetch_bumpers(int time){
