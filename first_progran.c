@@ -3,41 +3,74 @@ typedef int bool;
 #define true 1
 #define false 0
 
+//wheel motor port number
 int wheels = 0;
+
+//steering motor port number
 int steering = 1;
+
+//left bumper port number
+int left_bmpr = 0;
+
+//right bumper port number
+int right_bmpr = 1;
+
+//turning wheels for 1000 milliseconds results in the hardest turn possible
 int full_turn = 1000;
+
+//turning wheels for 600 milliseconds results in about half a full turn.
 int half_turn = 600;
 
 int main(char* argv, int argc) {
-    bool loop = true;
-    while(loop){
-    enable_servos();
-    mav(wheels, 800);
-    switch (digital(0) || digital(1)){
-    case 1:
-        loop = false;
-        ao();
-        move("back", 3);
-        break;
 
+    switch(move("forward", 3)){
+    case left_bmpr:
+        move("back", 3);
+        move_turn_90("right");
+        move_turn_90("left");
+        break;
+    case right_bmpr:
+        move("back", 3);
+        move_turn_90("left");
+        move_turn_90("right");
+        break;
+    case -1:
+        //bumper not hit :)
+        break;
     }
- }
-// move_turn_90("left");
-// move_turn_90("right");
+
 
  return 0;
 }
 
-void fetch_bumpers(int time){
+s
+/***
+    loops and checks for bumper collision
+    stuck in loop for designated time or
+    until collision.
+
+    @var milliseconds: how many milliseconds
+    in multiples of 100
+
+    @returns which bumper has been hit
+    -1 means no collision
+ **/
+int fetch_bumpers_loop(int milliseconds){
     bool loop = true;
-    while(loop){
-        if (digital(0)){
+
+    //
+    for (int i = 0; i< time; i+= 100;){
+        if (digital(left_bmpr)){
             loop = false;
+            return left_bmpr;
         }
-        if (digital(1)){
+        if (digital(right_bmpr)){
             loop = false;
+            return right_bmpr;
         }
+        msleep(100);
     }
+    return -1;
 }
 
 /***
@@ -48,15 +81,16 @@ void fetch_bumpers(int time){
 
     @var dur: duration. seconds to move for.
  **/
- void move(char* dir, int dur){
+ int move(char* dir, int dur){
+     int val;
      enable_servos();
      if("forward")
          mav(wheels, 800);
      else //"back"
          mav(wheels, -800);
-     sleep(dur);
+     val = fetch_bumpers_loop(dur*100); //dur * 100 is seconds to milliseconds
      ao();
-     return;
+     return val; // returns bumper port or -1 if nothing hit
  }
 
 /***
@@ -66,21 +100,22 @@ void fetch_bumpers(int time){
     @var dir: direction should be "left"
     or "right"
  **/
-void move_turn_90(char* dir){
+int move_turn_90(char* dir){
     if(dir == "left")
         turn("left", full_turn);
     else
         turn("right", full_turn);
 
     mav(wheels, 500);
-    msleep(3900);
+    //msleep(3900); // changed this to fetch_bumper_loop
+    fetch_bumpers_loop(3900);
     ao(); //shuts off all motors
     if(dir == "left")
         turn("right", full_turn);
     else
         turn("left", full_turn);
 
-    return;
+    return -1; //change to return bumper hit
 }
 
 /***
