@@ -58,7 +58,7 @@ s
 int fetch_bumpers_loop(int milliseconds){
     bool loop = true;
 
-    //
+    //i counts the milliseconds slept for approximately.
     for (int i = 0; i< time; i+= 100;){
         if (digital(left_bmpr)){
             loop = false;
