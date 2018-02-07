@@ -1,35 +1,31 @@
 #include <kipr/botball.h>
+#include <time.h>
 typedef int bool;
 #define true 1
 #define false 0
 
-//wheel motor port number
-int wheels = 0;
+//motor ports
+const int wheels = 0;
+const int steering = 1;
 
-//steering motor port number
-int steering = 1;
-
-//left bumper port number
-int left_bmpr = 0;
-
-//right bumper port number
-int right_bmpr = 1;
+//bumper ports
+const int left_bmpr = 0;
+const int right_bmpr = 1;
 
 //turning wheels for 1000 milliseconds results in the hardest turn possible
 int full_turn = 1000;
-
 //turning wheels for 600 milliseconds results in about half a full turn.
 int half_turn = 600;
 
-int main(char* argv, int argc) {
+int main(int argc, char** argv) {
 
-    switch(move("forward", 3)){
-    case left_bmpr:
-        move("back", 3);
+    switch(move("forward", 5)){
+    case 0: //left_bmpr
+        move("back", 3); //does not work for some reason???
         move_turn_90("right");
         move_turn_90("left");
         break;
-    case right_bmpr:
+    case 1: //right_bmpr
         move("back", 3);
         move_turn_90("left");
         move_turn_90("right");
@@ -39,11 +35,10 @@ int main(char* argv, int argc) {
         break;
     }
 
-
  return 0;
 }
 
-s
+
 /***
     loops and checks for bumper collision
     stuck in loop for designated time or
@@ -55,17 +50,24 @@ s
     @returns which bumper has been hit
     -1 means no collision
  **/
-int fetch_bumpers_loop(int milliseconds){
+int fetch_bumpers_loop(int seconds){
+    bool loop = true;
+    time_t start,now;
 
-    //i counts the milliseconds slept for approximately.
-    for (int i = 0; i< time; i+= 100;){
+    start = time(NULL);
+
+
+    while(loop){
         if (digital(left_bmpr)){
             return left_bmpr;
         }
         if (digital(right_bmpr)){
             return right_bmpr;
         }
-        msleep(100);
+        now = time(NULL);
+
+        if(difftime(now, start) >= seconds) //probably running into issue  here on second move
+            return -1;
     }
     return -1;
 }
@@ -82,10 +84,10 @@ int fetch_bumpers_loop(int milliseconds){
      int val;
      enable_servos(); // turn on motors
      if("forward")
-         mav(wheels, 800); // move at velocity 800 out of -1000 to 1000
+         move_relative_position(wheels, 1000, 1000); // move at velocity 800 out of -1000 to 1000
      else //"back"
          mav(wheels, -800);
-     val = fetch_bumpers_loop(dur*100); // loop and check bumper. dur * 100 is seconds to milliseconds
+     val = fetch_bumpers_loop(dur); // loop and check bumper
      ao(); // all motors off
      return val; // returns bumper port or -1 if nothing hit
  }
@@ -105,7 +107,7 @@ int move_turn_90(char* dir){
 
     mav(wheels, 500);
     //msleep(3900); // changed this to fetch_bumper_loop
-    fetch_bumpers_loop(3900);
+    fetch_bumpers_loop(4);
     ao(); //shuts off all motors
     if(dir == "left")
         turn("right", full_turn);
@@ -130,7 +132,7 @@ void turn(char* dir, int turn_duration){
     if(dir == "left")
         mav(steering, 800);
     else//dir == right
-        mav(steering, -800)
+        mav(steering, -800);
     msleep(turn_duration);
     ao(); //turn off motor
     return;
