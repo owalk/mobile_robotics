@@ -1,5 +1,7 @@
 #include <kipr/botball.h>
 #include <time.h>
+#include <unistd.h>
+
 typedef int bool;
 #define true 1
 #define false 0
@@ -17,26 +19,73 @@ int full_turn = 1000;
 //turning wheels for 600 milliseconds results in about half a full turn.
 int half_turn = 600;
 
+int move(char* dir, int dur);
+void safe_move_back(void);
+int fetch_bumpers_loop(int seconds);
+int move_turn_90(char* dir);
+void turn(char* dir, int turn_duration);
+
 int main(int argc, char** argv) {
+	
+    while(true){
+        switch(move("forward", 60)){
+        case 1: //left_bmpr
+            safe_move_back();
+            move_turn_90("right");
+            break;
+        case 0: //right_bmpr
+            safe_move_back();
+            move_turn_90("left");
 
-    switch(move("forward", 5)){
-    case 0: //left_bmpr
-        move("back", 3); //does not work for some reason???
-        move_turn_90("right");
-        move_turn_90("left");
-        break;
-    case 1: //right_bmpr
-        move("back", 3);
-        move_turn_90("left");
-        move_turn_90("right");
-        break;
-    case -1:
-        //bumper not hit :)
-        break;
+            sleep(1);
+            break;
+        case -1:
+            //bumper not hit :)
+            break;
+        }
     }
-
  return 0;
 }
+
+/***
+	move back without checking bumpers.
+    this lets us avoid a bug where you cant move
+    if bumper is already down.
+    **/
+
+void safe_move_back(void){
+ 	enable_servos(); // turn on motors
+        mav(0, -800);
+        msleep(500);
+        ao();
+    return;
+}
+
+/***
+    move forward or back for dur seconds.
+
+    @var dir: direction. either forward
+    or back
+
+    @var dur: duration. seconds to move for.
+ **/
+ int move(char* dir, int dur){
+     int val;
+     enable_servos(); // turn on motors
+     if(strcmp(dir, "forward")) {
+         printf("moving forward for %d seconds\n", dur);
+         mav(wheels, 800);
+     }
+     else {
+         printf("moving back for %d seconds\n", dur);
+         mav(wheels, -800);
+     }
+     val = fetch_bumpers_loop(dur); // loop and check bumper
+     printf("fetch_bumper_loop is returning with %d", val);
+     ao(); // all motors off
+     return val; // returns bumper port or -1 if nothing hit
+ }
+
 
 
 /***
@@ -56,41 +105,28 @@ int fetch_bumpers_loop(int seconds){
 
     start = time(NULL);
 
-
     while(loop){
+
         if (digital(left_bmpr)){
-            return left_bmpr;
+		move_relative_position(wheels,-800,5000);           
+	return left_bmpr;
         }
         if (digital(right_bmpr)){
-            return right_bmpr;
+		move_relative_position(wheels,-800,5000);             
+	return right_bmpr;
         }
         now = time(NULL);
 
-        if(difftime(now, start) >= seconds) //probably running into issue  here on second move
+        int val = difftime(now, start);
+        if( val >= seconds){ //probably running into issue  here on second move
+            printf("comparison of time is val=%d", val);
             return -1;
+        }
     }
     return -1;
 }
 
-/***
-    move forward or back for dur seconds.
 
-    @var dir: direction. either forward
-    or back
-
-    @var dur: duration. seconds to move for.
- **/
- int move(char* dir, int dur){
-     int val;
-     enable_servos(); // turn on motors
-     if("forward")
-         move_relative_position(wheels, 1000, 1000); // move at velocity 800 out of -1000 to 1000
-     else //"back"
-         mav(wheels, -800);
-     val = fetch_bumpers_loop(dur); // loop and check bumper
-     ao(); // all motors off
-     return val; // returns bumper port or -1 if nothing hit
- }
 
 /***
     robot moves while turning 90 degrees.
@@ -100,7 +136,7 @@ int fetch_bumpers_loop(int seconds){
     or "right"
  **/
 int move_turn_90(char* dir){
-    if(dir == "left")
+    if(strcmp(dir, "left"))
         turn("left", full_turn);
     else
         turn("right", full_turn);
@@ -109,7 +145,7 @@ int move_turn_90(char* dir){
     //msleep(3900); // changed this to fetch_bumper_loop
     fetch_bumpers_loop(4);
     ao(); //shuts off all motors
-    if(dir == "left")
+    if(strcmp(dir, "left"))
         turn("right", full_turn);
     else
         turn("left", full_turn);
@@ -129,7 +165,7 @@ int move_turn_90(char* dir){
  **/
 void turn(char* dir, int turn_duration){
     enable_servos(); //turn on motor
-    if(dir == "left")
+    if(strcmp(dir, "left"))
         mav(steering, 800);
     else//dir == right
         mav(steering, -800);
