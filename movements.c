@@ -1,15 +1,21 @@
 #include "movements.h"
 
+
+typedef int bool;
+#define true 1
+#define false 0
+
 /***
-	move back without checking bumpers.
+    move back without checking bumpers.
     this lets us avoid a bug where you cant move
     if bumper is already down.
     **/
-void safe_move_back(void){
- 	enable_servos(); // turn on motors
-        mav(0, -800);
-        msleep(500);
-        ao();
+void safe_move_back(int duration){
+    off(wheels);
+    motor(wheels, 100);
+    mav(0, -800);
+    msleep(duration);
+    off(wheels);
     return;
 }
 
@@ -26,10 +32,10 @@ int move_turn_90(char* dir){
     else
         turn("right", full_turn);
 
-    mav(wheels, 500);
-    //msleep(3900); // changed this to fetch_bumper_loop
-    fetch_bumpers_loop(4);
-    ao(); //shuts off all motors
+    //mav(wheels, 500);
+    msleep(3900); // changed this to fetch_bumper_loop
+    //fetch_bumpers_loop(4);
+    //ao(); //shuts off all motors
     if(strcmp(dir, "left") == 0)
         turn("right", full_turn);
     else
@@ -49,18 +55,36 @@ int move_turn_90(char* dir){
     as 1000
  **/
  void turn(char* dir, int turn_duration){
-    
-    motor(steering, 100); //turn on motor at port steering with 100% power
-    if(strcmp(dir, "left") == 0){
-      mav(steering, 1000); //turn left
-        printf("turning left");
-    } else if(strcmp(dir, "right") == 0){
-     	printf("turned right");
-        mav(steering, -1000); // turn right
-    }
-    msleep(turn_duration);
-    off(steering);
+/*     float dur = (float)turn_duration/1000;
+     bool loop = true;
+     time_t start,current;
+*/
+     motor(steering, 100); //turn on motor at port steering with 100% power
+     if(strcmp(dir, "left") == 0){
+         mav(steering, 1000); //turn left
+         printf("turning left");
+     } else if(strcmp(dir, "right") == 0){
+         printf("turned right");
+         mav(steering, -1000); // turn right
+     }
+     msleep(turn_duration);
+     off(steering);
+     return;
+// movement
+/* // this attempts to check for turn codition while sleeping. not wokring..
+    start = time(NULL);
 
+    while(loop){
+        current = time(NULL);
+        int val = difftime(current, start);
+        printf("val is: %.6f", val);
+
+        // check turn condition
+        if( val >= dur){
+            off(steering); //turn off motor after # seconds passed that we want
+        }
+
+        }*/
     return;
  }
 
@@ -73,7 +97,7 @@ int move_turn_90(char* dir){
     @var dur: duration. seconds to move for.
  **/
  int move(char* dir, int dur){
-     int val;
+     float val;
      motor(wheels, 100); // turn on wheels at 100 percent.
      if(strcmp(dir, "forward") == 0) {
          printf("moving forward for %d seconds\n", dur);
