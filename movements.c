@@ -1,9 +1,9 @@
 #include "movements.h"
 
+// motor ports
+const int wheels = 0;
+const int steering = 1;
 
-typedef int bool;
-#define true 1
-#define false 0
 
 /***
     move back without checking bumpers.
@@ -18,6 +18,35 @@ void safe_move_back(int duration){
     off(wheels);
     return;
 }
+
+
+int fetch_bumpers_loop(int seconds); // declaring bumper function for move function.
+
+// this should be moved to bumpers.c and renamed as bumper specific move
+/***
+    move forward or back for dur seconds.
+
+    @var dir: direction. either forward
+    or back
+
+    @var dur: duration. seconds to move for.
+ **/
+ int move(char* dir, int dur){
+     float val;
+     motor(wheels, 100); // turn on wheels at 100 percent.
+     if(strcmp(dir, "forward") == 0) {
+         printf("moving forward for %d seconds\n", dur);
+         mav(wheels, -800);
+     }
+     else {
+         printf("moving back for %d seconds\n", dur);
+         mav(wheels, 800);
+     }
+     val = fetch_bumpers_loop(dur); // loop and check bumper
+     
+     off(wheels); // wheels motor off
+     return val; // returns bumper port or -1 if nothing hit
+ }
 
 /***
     robot moves while turning 90 degrees.
@@ -86,29 +115,4 @@ int move_turn_90(char* dir){
 
         }*/
     return;
- }
-
-/***
-    move forward or back for dur seconds.
-
-    @var dir: direction. either forward
-    or back
-
-    @var dur: duration. seconds to move for.
- **/
- int move(char* dir, int dur){
-     float val;
-     motor(wheels, 100); // turn on wheels at 100 percent.
-     if(strcmp(dir, "forward") == 0) {
-         printf("moving forward for %d seconds\n", dur);
-         mav(wheels, -800);
-     }
-     else {
-         printf("moving back for %d seconds\n", dur);
-         mav(wheels, 800);
-     }
-     val = fetch_bumpers_loop(dur); // loop and check bumper
-     printf("fetch_bumpers_loop is returning with %d", val);
-     off(wheels); // wheels motor off
-     return val; // returns bumper port or -1 if nothing hit
  }

@@ -1,4 +1,6 @@
 #include <kipr/botball.h>
+#include <time.h>
+#include <unistd.h>
 
 //motor ports
 extern const int wheels;
@@ -18,3 +20,7 @@ extern const int right_outer_Sensor;
 extern int full_turn;
 //turning wheels for 600 milliseconds results in about half a full turn.
 extern int half_turn;
+
+typedef int bool;
+#define true 1
+#define false 0
